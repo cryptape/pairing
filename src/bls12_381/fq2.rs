@@ -11,6 +11,18 @@ pub struct Fq2 {
     pub c1: Fq
 }
 
+impl Fq2{
+    pub fn serial(&self)->([u64;6],[u64;6]){
+        (self.c0.serial(),self.c1.serial())
+    }
+    pub fn from_serial(serial:([u64;6],[u64;6]))->Fq2{
+        Fq2{
+            c0:Fq::from_serial(serial.0),
+            c1:Fq::from_serial(serial.1),
+        }
+    }
+}
+
 impl ::std::fmt::Display for Fq2
 {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
@@ -549,7 +561,7 @@ fn bench_fq2_sqrt(b: &mut ::test::Bencher) {
 #[test]
 fn fq2_field_tests() {
     use ::PrimeField;
-    
+
     ::tests::field::random_field_tests::<Fq2>();
     ::tests::field::random_sqrt_tests::<Fq2>();
     ::tests::field::random_frobenius_tests::<Fq2, _>(super::fq::Fq::char(), 13);

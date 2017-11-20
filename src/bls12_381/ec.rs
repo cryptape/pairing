@@ -5,6 +5,7 @@ macro_rules! curve_impl {
         $affine:ident,
         $prepared:ident,
         $basefield:ident,
+        $fieldserial:ty,
         $scalarfield:ident,
         $uncompressed:ident,
         $compressed:ident,
@@ -12,9 +13,9 @@ macro_rules! curve_impl {
     ) => {
         #[derive(Copy, Clone, PartialEq, Eq, Debug)]
         pub struct $affine {
-            pub(crate) x: $basefield,
-            pub(crate) y: $basefield,
-            pub(crate) infinity: bool
+            pub x: $basefield,
+            pub y: $basefield,
+            pub infinity: bool
         }
 
         impl ::std::fmt::Display for $affine
@@ -117,6 +118,19 @@ macro_rules! curve_impl {
             type Compressed = $compressed;
             type Pair = $pairing;
             type PairingResult = Fq12;
+            type FieldSerial = ($fieldserial,$fieldserial,bool);
+
+            fn serial(&self)->Self::FieldSerial{
+                (self.x.serial(),self.y.serial(),self.infinity)
+            }
+
+            fn from_serial(serial:Self::FieldSerial)->$affine{
+                $affine {
+                    x:$basefield::from_serial(serial.0),
+                    y:$basefield::from_serial(serial.1),
+                    infinity:serial.2
+                }
+            }
 
             fn zero() -> Self {
                 $affine {
@@ -587,7 +601,7 @@ pub mod g1 {
     use super::super::{Bls12, Fq, Fr, FrRepr, FqRepr, Fq12};
     use ::{CurveProjective, CurveAffine, PrimeField, SqrtField, PrimeFieldRepr, Field, BitIterator, EncodedPoint, GroupDecodingError, Engine};
 
-    curve_impl!("G1", G1, G1Affine, G1Prepared, Fq, Fr, G1Uncompressed, G1Compressed, G2Affine);
+    curve_impl!("G1", G1, G1Affine, G1Prepared, Fq, [u64; 6], Fr, G1Uncompressed, G1Compressed, G2Affine);
 
     #[derive(Copy)]
     pub struct G1Uncompressed([u8; 96]);
@@ -924,15 +938,15 @@ pub mod g1 {
                 // Calculated by: ((x-1)**2) // 3
                 // where x is the BLS parameter.
                 for b in "111001011011001000110000000000010101010101010111100001010101101000110000000000101010101010101100000000000000001010101010101011"
-                         .chars()
-                         .map(|c| c == '1')
-                {
-                    g1.double();
+                    .chars()
+                    .map(|c| c == '1')
+                    {
+                        g1.double();
 
-                    if b {
-                        g1.add_assign_mixed(&p);
+                        if b {
+                            g1.add_assign_mixed(&p);
+                        }
                     }
-                }
 
                 if !g1.is_zero() {
                     assert_eq!(i, 4);
@@ -1140,7 +1154,7 @@ pub mod g2 {
     use super::g1::G1Affine;
     use ::{CurveProjective, CurveAffine, PrimeField, SqrtField, PrimeFieldRepr, Field, BitIterator, EncodedPoint, GroupDecodingError, Engine};
 
-    curve_impl!("G2", G2, G2Affine, G2Prepared, Fq2, Fr, G2Uncompressed, G2Compressed, G1Affine);
+    curve_impl!("G2", G2, G2Affine, G2Prepared, Fq2, ([u64; 6],[u64; 6]), Fr, G2Uncompressed, G2Compressed, G1Affine);
 
     #[derive(Copy)]
     pub struct G2Uncompressed([u8; 192]);
@@ -1480,7 +1494,7 @@ pub mod g2 {
             if let Some(y) = rhs.sqrt() {
                 let mut negy = y;
                 negy.negate();
-                
+
                 let p = G2Affine {
                     x: x,
                     y: if y < negy { y } else { negy },
@@ -1495,15 +1509,15 @@ pub mod g2 {
                 // Calculated by: ((x**8) - (4 * (x**7)) + (5 * (x**6)) - (4 * (x**4)) + (6 * (x**3)) - (4 * (x**2)) - (4*x) + 13) // 9
                 // where x is the BLS parameter.
                 for b in "101110101010100001110101001010101000001010011100111111100010000100100011101010100000111100100101000011101101010001000000010110011011001000111011110010001010100011100001000010110101011101010100110100010100010000001011011001011100101101001111101110111111010011000101000111100011100101101001101100111101000001011101111001000010101001101111110001010010011101001100110100100011010111000010110000101101110110001101110011110000110111100001100011100001100111100011100001110001110001100011100011100100011100011100101"
-                         .chars()
-                         .map(|c| c == '1')
-                {
-                    g2.double();
+                    .chars()
+                    .map(|c| c == '1')
+                    {
+                        g2.double();
 
-                    if b {
-                        g2.add_assign_mixed(&p);
+                        if b {
+                            g2.add_assign_mixed(&p);
+                        }
                     }
-                }
 
                 if !g2.is_zero() {
                     assert_eq!(i, 2);

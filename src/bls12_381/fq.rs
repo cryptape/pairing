@@ -195,6 +195,15 @@ pub const NEGATIVE_ONE: Fq = Fq(FqRepr([0x43f5fffffffcaaae, 0x32b7fff2ed47fffd, 
 #[derive(Copy, Clone, PartialEq, Eq, Default, Debug)]
 pub struct FqRepr(pub [u64; 6]);
 
+impl FqRepr{
+    pub fn serial(&self)->[u64;6]{
+        self.0
+    }
+    pub fn from_serial(serial:[u64;6])->FqRepr{
+        FqRepr(serial)
+    }
+}
+
 impl ::rand::Rand for FqRepr {
     #[inline(always)]
     fn rand<R: ::rand::Rng>(rng: &mut R) -> Self {
@@ -388,6 +397,15 @@ impl PrimeFieldRepr for FqRepr {
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Fq(FqRepr);
+
+impl Fq{
+    pub fn serial(&self)->[u64;6]{
+        self.0.serial()
+    }
+    pub fn from_serial(serial:[u64;6])->Fq{
+        Fq(FqRepr::from_serial(serial))
+    }
+}
 
 /// `Fq` elements are ordered lexicographically.
 impl Ord for Fq {
@@ -821,14 +839,14 @@ impl SqrtField for Fq {
         a0.mul_assign(self);
 
         if a0 == NEGATIVE_ONE
-        {
-            None
-        }
-        else
-        {
-            a1.mul_assign(self);
-            Some(a1)
-        }
+            {
+                None
+            }
+            else
+            {
+                a1.mul_assign(self);
+                Some(a1)
+            }
     }
 }
 
@@ -1303,12 +1321,12 @@ fn test_fq_sub_assign() {
         let mut tmp = Fq(FqRepr([0x531221a410efc95b, 0x72819306027e9717, 0x5ecefb937068b746, 0x97de59cd6feaefd7, 0xdc35c51158644588, 0xb2d176c04f2100]));
         tmp.sub_assign(&Fq(FqRepr([0x98910d20877e4ada, 0x940c983013f4b8ba, 0xf677dc9b8345ba33, 0xbef2ce6b7f577eba, 0xe1ae288ac3222c44, 0x5968bb602790806])));
         assert_eq!(tmp, Fq(FqRepr([0x748014838971292c, 0xfd20fad49fddde5c, 0xcf87f198e3d3f336, 0x3d62d6e6e41883db, 0x45a3443cd88dc61b, 0x151d57aaf755ff94])));
-        
+
         // Test the opposite subtraction which doesn't test reduction.
         tmp = Fq(FqRepr([0x98910d20877e4ada, 0x940c983013f4b8ba, 0xf677dc9b8345ba33, 0xbef2ce6b7f577eba, 0xe1ae288ac3222c44, 0x5968bb602790806]));
         tmp.sub_assign(&Fq(FqRepr([0x531221a410efc95b, 0x72819306027e9717, 0x5ecefb937068b746, 0x97de59cd6feaefd7, 0xdc35c51158644588, 0xb2d176c04f2100])));
         assert_eq!(tmp, Fq(FqRepr([0x457eeb7c768e817f, 0x218b052a117621a3, 0x97a8e10812dd02ed, 0x2714749e0f6c8ee3, 0x57863796abde6bc, 0x4e3ba3f4229e706])));
-        
+
         // Test for sensible results with zero
         tmp = Fq(FqRepr::from(0));
         tmp.sub_assign(&Fq(FqRepr::from(0)));
@@ -1589,7 +1607,7 @@ fn test_fq_pow() {
 
 #[test]
 fn test_fq_sqrt() {
-	let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
     assert_eq!(Fq::zero().sqrt().unwrap(), Fq::zero());
 
@@ -1620,7 +1638,7 @@ fn test_fq_sqrt() {
 
 #[bench]
 fn bench_fq_sqrt(b: &mut ::test::Bencher) {
-	const SAMPLES: usize = 1000;
+    const SAMPLES: usize = 1000;
 
     let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
@@ -1739,8 +1757,8 @@ fn test_fq_display() {
 
 #[test]
 fn test_fq_num_bits() {
-	assert_eq!(Fq::num_bits(), 381);
-	assert_eq!(Fq::capacity(), 380);
+    assert_eq!(Fq::num_bits(), 381);
+    assert_eq!(Fq::capacity(), 380);
 }
 
 #[test]

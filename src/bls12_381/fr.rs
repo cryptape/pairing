@@ -31,6 +31,42 @@ const ROOT_OF_UNITY: FrRepr = FrRepr([0xb9b58d8c5f0e466a, 0x5b1b4c801819d7ec, 0x
 #[derive(Copy, Clone, PartialEq, Eq, Default, Debug)]
 pub struct FrRepr(pub [u64; 4]);
 
+impl FrRepr{
+    pub fn serial(&self)->[u64;4]{
+        self.0
+    }
+
+    pub fn from_serial(serial:[u64;4])->FrRepr{
+        FrRepr(serial)
+    }
+
+    pub fn bits(&self)->Vec<bool>{
+        let mut v = Vec::with_capacity(256);
+        for num in self.0.into_iter(){
+            let mut num = *num;
+            for _ in 0..64{
+                v.push(num&1==1);
+                num>>=1;
+            }
+        }
+        v
+    }
+
+    pub fn from_bits(bits:Vec<bool>)->Self{
+        assert_eq!(bits.len(),256);
+        let mut j = 0;
+        let mut v:[u64;4] = [0;4];
+        for i in 0..4{
+            for _ in 0..64{
+                v[i]<<=1;
+                v[i]|=bits[j] as u64;
+                j+=1;
+            }
+        }
+        FrRepr(v)
+    }
+}
+
 impl ::rand::Rand for FrRepr {
     #[inline(always)]
     fn rand<R: ::rand::Rng>(rng: &mut R) -> Self {
@@ -224,6 +260,16 @@ impl PrimeFieldRepr for FrRepr {
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Fr(FrRepr);
+
+impl Fr{
+    pub fn serial(&self)->[u64;4]{
+        self.0.serial()
+    }
+
+    pub fn from_serial(serial:[u64;4])->Self{
+        Fr(FrRepr::from_serial(serial))
+    }
+}
 
 impl ::std::fmt::Display for Fr
 {
@@ -1015,12 +1061,12 @@ fn test_fr_sub_assign() {
         let mut tmp = Fr(FrRepr([0x6a68c64b6f735a2b, 0xd5f4d143fe0a1972, 0x37c17f3829267c62, 0xa2f37391f30915c]));
         tmp.sub_assign(&Fr(FrRepr([0xade5adacdccb6190, 0xaa21ee0f27db3ccd, 0x2550f4704ae39086, 0x591d1902e7c5ba27])));
         assert_eq!(tmp, Fr(FrRepr([0xbc83189d92a7f89c, 0x7f908737d62d38a3, 0x45aa62cfe7e4c3e1, 0x24ffc5896108547d])));
-        
+
         // Test the opposite subtraction which doesn't test reduction.
         tmp = Fr(FrRepr([0xade5adacdccb6190, 0xaa21ee0f27db3ccd, 0x2550f4704ae39086, 0x591d1902e7c5ba27]));
         tmp.sub_assign(&Fr(FrRepr([0x6a68c64b6f735a2b, 0xd5f4d143fe0a1972, 0x37c17f3829267c62, 0xa2f37391f30915c])));
         assert_eq!(tmp, Fr(FrRepr([0x437ce7616d580765, 0xd42d1ccb29d1235b, 0xed8f753821bd1423, 0x4eede1c9c89528ca])));
-        
+
         // Test for sensible results with zero
         tmp = Fr(FrRepr::from(0));
         tmp.sub_assign(&Fr(FrRepr::from(0)));

@@ -65,9 +65,9 @@ pub trait Engine: Sized {
     /// Perform a miller loop with some number of (G1, G2) pairs.
     fn miller_loop<'a, I>(i: I) -> Self::Fqk
         where I: IntoIterator<Item=&'a (
-                                    &'a <Self::G1Affine as CurveAffine>::Prepared,
-                                    &'a <Self::G2Affine as CurveAffine>::Prepared
-                               )>;
+            &'a <Self::G1Affine as CurveAffine>::Prepared,
+            &'a <Self::G2Affine as CurveAffine>::Prepared
+        )>;
 
     /// Perform final exponentiation of the result of a miller loop.
     fn final_exponentiation(&Self::Fqk) -> Option<Self::Fqk>;
@@ -89,16 +89,16 @@ pub trait Engine: Sized {
 /// Projective representation of an elliptic curve point guaranteed to be
 /// in the correct prime order subgroup.
 pub trait CurveProjective: PartialEq +
-                           Eq +
-                           Sized +
-                           Copy +
-                           Clone +
-                           Send +
-                           Sync +
-                           fmt::Debug +
-                           fmt::Display +
-                           rand::Rand +
-                           'static
+Eq +
+Sized +
+Copy +
+Clone +
+Send +
+Sync +
+fmt::Debug +
+fmt::Display +
+rand::Rand +
+'static
 {
     type Engine: Engine;
     type Scalar: PrimeField;
@@ -160,15 +160,15 @@ pub trait CurveProjective: PartialEq +
 /// Affine representation of an elliptic curve point guaranteed to be
 /// in the correct prime order subgroup.
 pub trait CurveAffine: Copy +
-                       Clone +
-                       Sized +
-                       Send +
-                       Sync +
-                       fmt::Debug +
-                       fmt::Display +
-                       PartialEq +
-                       Eq +
-                       'static
+Clone +
+Sized +
+Send +
+Sync +
+fmt::Debug +
+fmt::Display +
+PartialEq +
+Eq +
+'static
 {
     type Engine: Engine;
     type Scalar: PrimeField;
@@ -179,6 +179,11 @@ pub trait CurveAffine: Copy +
     type Compressed: EncodedPoint<Affine=Self>;
     type Pair: CurveAffine<Pair=Self>;
     type PairingResult: Field;
+    type FieldSerial;
+
+    fn serial(&self)->Self::FieldSerial;
+
+    fn from_serial(Self::FieldSerial)->Self;
 
     /// Returns the additive identity.
     fn zero() -> Self;
@@ -220,13 +225,13 @@ pub trait CurveAffine: Copy +
 
 /// An encoded elliptic curve point, which should essentially wrap a `[u8; N]`.
 pub trait EncodedPoint: Sized +
-                        Send +
-                        Sync +
-                        AsRef<[u8]> +
-                        AsMut<[u8]> +
-                        Clone +
-                        Copy +
-                        'static
+Send +
+Sync +
+AsRef<[u8]> +
+AsMut<[u8]> +
+Clone +
+Copy +
+'static
 {
     type Affine: CurveAffine;
 
@@ -256,15 +261,15 @@ pub trait EncodedPoint: Sized +
 
 /// This trait represents an element of a field.
 pub trait Field: Sized +
-                 Eq +
-                 Copy +
-                 Clone +
-                 Send +
-                 Sync +
-                 fmt::Debug +
-                 fmt::Display +
-                 'static +
-                 rand::Rand
+Eq +
+Copy +
+Clone +
+Send +
+Sync +
+fmt::Debug +
+fmt::Display +
+'static +
+rand::Rand
 {
     /// Returns the zero element of the field, the additive identity.
     fn zero() -> Self;
@@ -336,20 +341,20 @@ pub trait SqrtField: Field
 /// prime field. It is a smart wrapper around a sequence of `u64` limbs, least-significant digit
 /// first.
 pub trait PrimeFieldRepr: Sized +
-                          Copy +
-                          Clone +
-                          Eq +
-                          Ord +
-                          Send +
-                          Sync +
-                          Default +
-                          fmt::Debug +
-                          fmt::Display +
-                          'static +
-                          rand::Rand +
-                          AsRef<[u64]> +
-                          AsMut<[u64]> +
-                          From<u64>
+Copy +
+Clone +
+Eq +
+Ord +
+Send +
+Sync +
+Default +
+fmt::Debug +
+fmt::Display +
+'static +
+rand::Rand +
+AsRef<[u64]> +
+AsMut<[u64]> +
+From<u64>
 {
     /// Subtract another represetation from this one, returning the borrow bit.
     fn sub_noborrow(&mut self, other: &Self) -> bool;

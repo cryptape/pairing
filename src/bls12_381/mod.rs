@@ -21,6 +21,7 @@ use super::{Engine, CurveAffine, Field, BitIterator};
 const BLS_X: u64 = 0xd201000000010000;
 const BLS_X_IS_NEGATIVE: bool = true;
 
+#[derive(Debug)]
 pub struct Bls12;
 
 impl Engine for Bls12 {
@@ -35,9 +36,9 @@ impl Engine for Bls12 {
 
     fn miller_loop<'a, I>(i: I) -> Self::Fqk
         where I: IntoIterator<Item=&'a (
-                                    &'a <Self::G1Affine as CurveAffine>::Prepared,
-                                    &'a <Self::G2Affine as CurveAffine>::Prepared
-                               )>
+            &'a <Self::G1Affine as CurveAffine>::Prepared,
+            &'a <Self::G2Affine as CurveAffine>::Prepared
+        )>
     {
         let mut pairs = vec![];
         for &(p, q) in i {

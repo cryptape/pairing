@@ -1,21 +1,24 @@
+mod ec;
 mod fq;
-mod fr;
+mod fq12;
 mod fq2;
 mod fq6;
-mod fq12;
-mod ec;
+mod fr;
 
 #[cfg(test)]
 mod tests;
 
-pub use self::fr::{Fr, FrRepr};
+pub use self::ec::{
+    G1Affine, G1Compressed, G1Prepared, G1Uncompressed, G2Affine, G2Compressed, G2Prepared,
+    G2Uncompressed, G1, G2,
+};
 pub use self::fq::{Fq, FqRepr};
+pub use self::fq12::Fq12;
 pub use self::fq2::Fq2;
 pub use self::fq6::Fq6;
-pub use self::fq12::Fq12;
-pub use self::ec::{G1, G2, G1Affine, G2Affine, G1Prepared, G2Prepared, G1Uncompressed, G2Uncompressed, G1Compressed, G2Compressed};
+pub use self::fr::{Fr, FrRepr};
 
-use super::{Engine, CurveAffine, Field, BitIterator};
+use super::{BitIterator, CurveAffine, Engine, Field};
 
 // The BLS parameter x for BLS12-381 is -0xd201000000010000
 const BLS_X: u64 = 0xd201000000010000;
@@ -35,10 +38,13 @@ impl Engine for Bls12 {
     type Fqk = Fq12;
 
     fn miller_loop<'a, I>(i: I) -> Self::Fqk
-        where I: IntoIterator<Item=&'a (
-            &'a <Self::G1Affine as CurveAffine>::Prepared,
-            &'a <Self::G2Affine as CurveAffine>::Prepared
-        )>
+    where
+        I: IntoIterator<
+            Item = &'a (
+                &'a <Self::G1Affine as CurveAffine>::Prepared,
+                &'a <Self::G2Affine as CurveAffine>::Prepared,
+            ),
+        >,
     {
         let mut pairs = vec![];
         for &(p, q) in i {
@@ -48,12 +54,7 @@ impl Engine for Bls12 {
         }
 
         // Twisting isomorphism from E to E'
-        fn ell(
-            f: &mut Fq12,
-            coeffs: &(Fq2, Fq2, Fq2),
-            p: &G1Affine
-        )
-        {
+        fn ell(f: &mut Fq12, coeffs: &(Fq2, Fq2, Fq2), p: &G1Affine) {
             let mut c0 = coeffs.0;
             let mut c1 = coeffs.1;
 
@@ -108,8 +109,7 @@ impl Engine for Bls12 {
                 r.frobenius_map(2);
                 r.mul_assign(&f2);
 
-                fn exp_by_x(f: &mut Fq12, x: u64)
-                {
+                fn exp_by_x(f: &mut Fq12, x: u64) {
                     *f = f.pow(&[x]);
                     if BLS_X_IS_NEGATIVE {
                         f.conjugate();
@@ -149,8 +149,8 @@ impl Engine for Bls12 {
                 y2.frobenius_map(1);
                 y1.mul_assign(&y2);
                 Some(y1)
-            },
-            None => None
+            }
+            None => None,
         }
     }
 }
@@ -164,14 +164,11 @@ impl G2Prepared {
         if q.is_zero() {
             return G2Prepared {
                 coeffs: vec![],
-                infinity: true
-            }
+                infinity: true,
+            };
         }
 
-        fn doubling_step(
-            r: &mut G2
-        ) -> (Fq2, Fq2, Fq2)
-        {
+        fn doubling_step(r: &mut G2) -> (Fq2, Fq2, Fq2) {
             // Adaptation of Algorithm 26, https://eprint.iacr.org/2010/354.pdf
             let mut tmp0 = r.x;
             tmp0.square();
@@ -242,11 +239,7 @@ impl G2Prepared {
             (tmp0, tmp3, tmp6)
         }
 
-        fn addition_step(
-            r: &mut G2,
-            q: &G2Affine
-        ) -> (Fq2, Fq2, Fq2)
-        {
+        fn addition_step(r: &mut G2, q: &G2Affine) -> (Fq2, Fq2, Fq2) {
             // Adaptation of Algorithm 27, https://eprint.iacr.org/2010/354.pdf
             let mut zsquared = r.z;
             zsquared.square();
@@ -355,7 +348,7 @@ impl G2Prepared {
 
         G2Prepared {
             coeffs: coeffs,
-            infinity: false
+            infinity: false,
         }
     }
 }
@@ -406,12 +399,14 @@ fn bench_pairing_miller_loop(b: &mut ::test::Bencher) {
 
     let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
-    let v: Vec<(G1Prepared, G2Prepared)> = (0..SAMPLES).map(|_|
-        (
-            G1Affine::from(G1::rand(&mut rng)).prepare(),
-            G2Affine::from(G2::rand(&mut rng)).prepare()
-        )
-    ).collect();
+    let v: Vec<(G1Prepared, G2Prepared)> = (0..SAMPLES)
+        .map(|_| {
+            (
+                G1Affine::from(G1::rand(&mut rng)).prepare(),
+                G2Affine::from(G2::rand(&mut rng)).prepare(),
+            )
+        })
+        .collect();
 
     let mut count = 0;
     b.iter(|| {
@@ -427,12 +422,15 @@ fn bench_pairing_final_exponentiation(b: &mut ::test::Bencher) {
 
     let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
-    let v: Vec<Fq12> = (0..SAMPLES).map(|_|
-        (
-            G1Affine::from(G1::rand(&mut rng)).prepare(),
-            G2Affine::from(G2::rand(&mut rng)).prepare()
-        )
-    ).map(|(ref p, ref q)| Bls12::miller_loop(&[(p, q)])).collect();
+    let v: Vec<Fq12> = (0..SAMPLES)
+        .map(|_| {
+            (
+                G1Affine::from(G1::rand(&mut rng)).prepare(),
+                G2Affine::from(G2::rand(&mut rng)).prepare(),
+            )
+        })
+        .map(|(ref p, ref q)| Bls12::miller_loop(&[(p, q)]))
+        .collect();
 
     let mut count = 0;
     b.iter(|| {
@@ -448,12 +446,9 @@ fn bench_pairing_full(b: &mut ::test::Bencher) {
 
     let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
-    let v: Vec<(G1, G2)> = (0..SAMPLES).map(|_|
-        (
-            G1::rand(&mut rng),
-            G2::rand(&mut rng)
-        )
-    ).collect();
+    let v: Vec<(G1, G2)> = (0..SAMPLES)
+        .map(|_| (G1::rand(&mut rng), G2::rand(&mut rng)))
+        .collect();
 
     let mut count = 0;
     b.iter(|| {

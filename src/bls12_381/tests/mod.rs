@@ -1,8 +1,7 @@
 use super::*;
-use ::*;
+use *;
 
-fn test_vectors<G: CurveProjective, E: EncodedPoint<Affine=G::Affine>>(expected: &[u8])
-{
+fn test_vectors<G: CurveProjective, E: EncodedPoint<Affine = G::Affine>>(expected: &[u8]) {
     let mut e = G::zero();
 
     let mut v = vec![];
@@ -147,9 +146,11 @@ fn test_g1_uncompressed_invalid_vectors() {
                 y.into_repr().write_be(&mut o.as_mut()[48..]).unwrap();
 
                 if let Err(GroupDecodingError::NotInSubgroup) = o.into_affine() {
-                    break
+                    break;
                 } else {
-                    panic!("should have rejected the point because it isn't in the correct subgroup")
+                    panic!(
+                        "should have rejected the point because it isn't in the correct subgroup"
+                    )
                 }
             } else {
                 x.add_assign(&Fq::one());
@@ -276,7 +277,7 @@ fn test_g2_uncompressed_invalid_vectors() {
             x3b.mul_assign(&x);
             x3b.add_assign(&Fq2 {
                 c0: Fq::from_repr(FqRepr::from(4)).unwrap(),
-                c1: Fq::from_repr(FqRepr::from(4)).unwrap()
+                c1: Fq::from_repr(FqRepr::from(4)).unwrap(),
             }); // TODO: perhaps expose coeff_b through API?
 
             if let Some(y) = x3b.sqrt() {
@@ -287,9 +288,11 @@ fn test_g2_uncompressed_invalid_vectors() {
                 y.c0.into_repr().write_be(&mut o.as_mut()[144..]).unwrap();
 
                 if let Err(GroupDecodingError::NotInSubgroup) = o.into_affine() {
-                    break
+                    break;
                 } else {
-                    panic!("should have rejected the point because it isn't in the correct subgroup")
+                    panic!(
+                        "should have rejected the point because it isn't in the correct subgroup"
+                    )
                 }
             } else {
                 x.add_assign(&Fq2::one());
@@ -377,7 +380,7 @@ fn test_g1_compressed_invalid_vectors() {
                 o.as_mut()[0] |= 0b1000_0000;
 
                 if let Err(GroupDecodingError::NotOnCurve) = o.into_affine() {
-                    break
+                    break;
                 } else {
                     panic!("should have rejected the point because it isn't on the curve")
                 }
@@ -401,9 +404,11 @@ fn test_g1_compressed_invalid_vectors() {
                 o.as_mut()[0] |= 0b1000_0000;
 
                 if let Err(GroupDecodingError::NotInSubgroup) = o.into_affine() {
-                    break
+                    break;
                 } else {
-                    panic!("should have rejected the point because it isn't in the correct subgroup")
+                    panic!(
+                        "should have rejected the point because it isn't in the correct subgroup"
+                    )
                 }
             } else {
                 x.add_assign(&Fq::one());
@@ -490,7 +495,7 @@ fn test_g2_compressed_invalid_vectors() {
         let mut o = o;
         let mut x = Fq2 {
             c0: Fq::one(),
-            c1: Fq::one()
+            c1: Fq::one(),
         };
 
         loop {
@@ -510,7 +515,7 @@ fn test_g2_compressed_invalid_vectors() {
                 o.as_mut()[0] |= 0b1000_0000;
 
                 if let Err(GroupDecodingError::NotOnCurve) = o.into_affine() {
-                    break
+                    break;
                 } else {
                     panic!("should have rejected the point because it isn't on the curve")
                 }
@@ -522,7 +527,7 @@ fn test_g2_compressed_invalid_vectors() {
         let mut o = o;
         let mut x = Fq2 {
             c0: Fq::one(),
-            c1: Fq::one()
+            c1: Fq::one(),
         };
 
         loop {
@@ -541,9 +546,11 @@ fn test_g2_compressed_invalid_vectors() {
                 o.as_mut()[0] |= 0b1000_0000;
 
                 if let Err(GroupDecodingError::NotInSubgroup) = o.into_affine() {
-                    break
+                    break;
                 } else {
-                    panic!("should have rejected the point because it isn't in the correct subgroup")
+                    panic!(
+                        "should have rejected the point because it isn't in the correct subgroup"
+                    )
                 }
             } else {
                 x.add_assign(&Fq2::one());
